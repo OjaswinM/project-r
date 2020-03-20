@@ -13,6 +13,15 @@ struct cursor {
 
 static struct cursor cur = {0, 0, (uint16_t *)VGA_MEM_START};
 
+void vga_cursor_move(int steps);
+void vga_put(uint16_t entry);
+
+void main() {
+	// Display an X on screen
+	uint16_t X = 0xF0 << 8 | 'X'; 
+	vga_put(X);
+}
+
 void vga_cursor_move(int steps)
 {
 	cur.curp += steps;
@@ -31,10 +40,4 @@ void vga_put(uint16_t entry)
 	*(cur.curp) = entry;
 	vga_cursor_move(1);
 	return;
-}
-
-void main() {
-	// Display an X on screen
-	uint16_t X = 0xF0 << 8 | 'X'; 
-	vga_put(X);
 }
