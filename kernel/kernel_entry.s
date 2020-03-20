@@ -2,7 +2,7 @@
 # a multiboot header required by grub to boot out kernel. It simply calls the
 # main() routine which is the entry point of the actual kernel.
 # the kernel
-.bits 32 # since we are in protected mode
+.code32 # since we are in protected mode
 
 .set ALIGN, 1 << 0		# to tell GRUB to load out modules at page aligned
 											# boundaries
@@ -25,14 +25,14 @@ since it needs to be 16byte aligned
 .section bss
 .align 16
 stack_bottom:
-	.skip 16384		; 16 KiB
-stack_top
+	.skip 16384		# 16 KiB
+stack_top:
 
 /*
 Out .text section. It must contain a _start label which is assigned as
 the entrypoint to the kernel by the linker. 
 */
-.section _text
+.section .text
 .global _start
 .type _start, @function
 _start:
@@ -41,8 +41,8 @@ _start:
 	Now we set up the stack registers to point to the the stack which we had earlier 
 	reserved
 	*/
-	mov stack_bottom, %ebp
-	mov stack_top, %esp
+	mov $stack_bottom, %ebp
+	mov $stack_top, %esp
 
 	call main		# call main() which is linked here from C code
 
