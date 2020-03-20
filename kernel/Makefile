@@ -23,7 +23,7 @@ QEMU_FLAGS = -monitor stdio
 
 all: kernel
 
-kernel: kernel_entry.o kernel.o 
+kernel: kernel_entry.o kernel.o $(DRIVERS_OBJ)
 	$(LD) $(LD_FLAGS) -o $(KERNEL) $^ -lgcc
 
 %.o: %.c
