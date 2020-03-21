@@ -17,6 +17,6 @@ This should open a new QEMU window which will boot the OS and start execution.
 
 ## Build
 
-In order to build the kernel files, a GCCC cross compiler and cross Binutils are needed. The instruction to install the same on the OS of your choice can be found [here](https://wiki.osdev.org/GCC_Cross-Compiler).
+In order to build the kernel files, a GCC cross compiler and cross Binutils are needed. The instruction to install the same on the OS of your choice can be found [here](https://wiki.osdev.org/GCC_Cross-Compiler).
 
 *TODO*: Complete this readme.
