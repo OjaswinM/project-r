@@ -3,13 +3,17 @@
 
 #include <stdint.h>
 
-// ~~~~~~~~~~~~ VGA ~~~~~~~~~~~~~
+/* ~~~~~~~~~~~~ VGA ~~~~~~~~~~~~~ */
 #define VGA_MEM_START 0xb8000
 #define VGA_X 80
 #define VGA_Y 25
 
-// ~~~~~~~~~~~~ COLORS ~~~~~~~~~~~~~
+/* ~~~~~~~~~~~~ COLORS ~~~~~~~~~~~~~ */
 #define BLACK_N_WHITE 0x0f
+
+/* ~~~~~~~~~~~~ MACROS ~~~~~~~~~~~~~ */
+
+#define OFFSET(X, Y) (X + Y * 80)
 
 // pointer to the current address
 struct cursor {
@@ -36,10 +40,10 @@ inline uint8_t vga_entry(uint8_t color, uint8_t ch)
 }
 
 // convert (row, col) to corresponding offset in VGA memory array
-inline uint16_t vga_offset(uint8_t x, uint8_t y)
-{
-	return (x + y * 80);	
-}
+// uint16_t inline vga_offset(uint8_t x, uint8_t y)
+// {
+// 	return (x + y * 80);	
+// }
 
 // move the cursor by specified steps, negative offsets are also accepted
 void vga_cursor_move(uint16_t steps);
@@ -48,10 +52,10 @@ void vga_cursor_move(uint16_t steps);
 void vga_cursor_set(uint8_t x, uint8_t y);
 
 // enter a character at given cursor position. The characcter is in black and white
-void vga_put(uint16_t entry);
+void vga_put(char entry);
 
 // enter a string at given cursor position.
-void vga_puts(uint16_t entry);
+void vga_puts(char* string);
 
 // fill the whole screen with black background
 void vga_cls();
