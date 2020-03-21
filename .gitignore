@@ -1,6 +1,6 @@
 *.o
-*.img
 *.swp
+*.swo
 
 compiler/
 boot/
