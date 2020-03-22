@@ -27,7 +27,7 @@ You will need to follow these steps to correctly set up the development environm
     - *Windows:* Donwload it [here](http://gnuwin32.sourceforge.net/packages/make.htm).
     - *MacOS:* `brew install make`
   - Finally you can compile and run the kernel by typing following command in the project's directory:-
-    `make && make run`
+    - `make && make run`
 
 
 *TODO*: Complete this readme.
