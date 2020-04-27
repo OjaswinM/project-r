@@ -5,7 +5,7 @@ use core::panic::PanicInfo;
 
 // TODO: Implement a proper panic handler
 #[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
+fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
