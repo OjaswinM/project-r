@@ -1,3 +1,6 @@
+compiler/
+*.swp
+
 #Added by cargo
 
 /target
