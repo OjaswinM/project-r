@@ -1,5 +1,8 @@
 compiler/
 *.swp
+*.o
+*.bak
+*.out
 
 #Added by cargo
 
