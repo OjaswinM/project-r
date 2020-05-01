@@ -1,5 +1,5 @@
 [bits 64]
-
+cli
 section .text
 global long_mode_start
 long_mode_start:

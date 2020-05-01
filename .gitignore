@@ -7,3 +7,4 @@ compiler/
 #Added by cargo
 
 /target
+/build

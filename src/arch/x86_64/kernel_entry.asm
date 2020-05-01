@@ -1,26 +1,12 @@
-; a small assembly file that is linked at the beginning of the kernel. It contains
-; a multiboot header required by grub to boot out kernel. It simply calls the
-; main() routine which is the entry point of the actual kernel.
-; the kernel
-; to tell GRUB to load out modules at page aligned boundaries
-; provide memory map
-; multiboot header for GRUB
-bits 32
-
-FLAGS equ 1 << 0 | 1 << 1
-MAGIC equ 0x1BADB002
-CHECKSUM equ -(MAGIC + FLAGS)
-
-section .multiboot
-align 4
-	dd MAGIC
-	dd FLAGS
-	dd CHECKSUM
-
-; C assumes the stack to be already set up so we reserve 16KiB for the stack here,
-; since it needs to be 16byte aligned 
+; A small assembly file that is performs the following:-
+; 
+; - sets up stack
+; - sets up PAE paging and identity maps first 2MB of memory
+; - sets up a GDT
+; - enables long mode
 
 section .bss
+bits 32
 align 4096
 pml4_table:
 	resb 4096
@@ -37,28 +23,28 @@ stack_top:
 
 section .rodata
 gdt_long_mode:
-	dq 0
+		dq 0
 gdt_null:  			     ; The null descriptor.
 	dw 0xFFFF                    ; Limit (low).
-        dw 0                         ; Base (low).
-        db 0                         ; Base (middle)
-        db 0                         ; Access.
-        db 1                         ; Granularity.
-        db 0                         ; Base (high).
+	dw 0                         ; Base (low).
+	db 0                         ; Base (middle)
+	db 0                         ; Access.
+	db 1                         ; Granularity.
+	db 0                         ; Base (high).
 gdt_code_entry: 
 	dw 0                         ; Limit (low).
-        dw 0                         ; Base (low).
-    	db 0                         ; Base (middle)
-     	db 10011010b                 ; Access (exec/read).
-    	db 10101111b                 ; Granularity, 64 bits flag, limit19:16.
-        db 0                         ; Base (high).
+	dw 0                         ; Base (low).
+	db 0                         ; Base (middle)
+	db 10011010b                 ; Access (exec/read).
+	db 10101111b                 ; Granularity, 64 bits flag, limit19:16.
+	db 0                         ; Base (high).
 gdt_data_entry:
 	dw 0                         ; Limit (low).
-        dw 0                         ; Base (low).
-        db 0                         ; Base (middle)
-        db 10010010b                 ; Access (read/write).
-        db 00000000b                 ; Granularity.
-        db 0                         ; Base (high).
+	dw 0                         ; Base (low).
+	db 0                         ; Base (middle)
+	db 10010010b                 ; Access (read/write).
+	db 00000000b                 ; Granularity.
+	db 0                         ; Base (high).
 gdt_pointer:
 	dw $ - gdt_long_mode - 1
 	dq gdt_long_mode
@@ -140,7 +126,7 @@ enable_long_mode_paging:
 
 	ret
 
-; #extern long_mode_start
+extern long_mode_start
 global _start
 _start:
 
@@ -154,16 +140,8 @@ _start:
 
 	lgdt [gdt_pointer]
 
-;	jmp CODE_SEG:long_mode_start
+	jmp CODE_SEG:long_mode_start
 
-long_mode:
-        cli                           ; Clear the interrupt flag.
-	mov eax ,0x2f4b2f4f
- 	mov [0xb8000], eax
- 	mov [0x00], eax
-
-
-	cli
 .inf:
 	hlt
 	jmp .inf
