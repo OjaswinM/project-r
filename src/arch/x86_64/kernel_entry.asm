@@ -127,8 +127,8 @@ enable_long_mode_paging:
 	ret
 
 extern long_mode_start
-global _start
-_start:
+global start
+start:
 
 	; Now we set up the stack registers to point to the the stack which we 
 	; had earlier reserved

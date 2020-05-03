@@ -1,26 +1,27 @@
 # ~~~~~~~~~~ Compilers and flags ~~~~~~~~~~~~~
 # Rust compiler
-CARGO = cargo
+CARGO = cargo 
 RUSTC  = rustc
-RUSTC_FLAGS = --target $(RUST_TARGET_PATH)
+RUSTC_FLAGS = --target $(RUST_TARGET)
 
-LD_SCRIPT = linker.ld
+LD_SCRIPT = ./src/arch/x86_64/linker.ld
 LD = x86_64-elf-ld 
-LD_FLAGS = -T $(LD_SCRIPT) -n --gc-sections
+LD_FLAGS = -T $(LD_SCRIPT) -n --gc-sections -g
 
 # assembler
 AS = nasm
-AS_FLAGS = -felf64
+AS_FLAGS = -felf64 -g -F dwarf
 
 # ~~~~~~~~~~~~ PATHS & FILES ~~~~~~~~~~~~~
-RUST_TARGET = ./x86-64-target.json
+RUST_TARGET = ./src/arch/x86_64/x86_64-target.json
 KERNEL = build/kernel.img
 KERN_ISO = build/project-r.iso
 GRUB_CFG = src/arch/x86_64/grub.cfg
+RUST_OBJ = target/x86_64-target/debug/project-r
 
-
-ASM_SRC_FILES = $(wildcard ./src/arch/x86_64/*.asm)
-ASM_OBJ_FILES = $(patsubst ./src/arch/x86_64/%.asm, ./build/arch/x86_64/%.o, $(ASM_SRC_FILES))
+RUST_SRCS = $(wildcard ./src/*.rs)
+ASM_SRCS = $(wildcard ./src/arch/x86_64/*.asm)
+ASM_OBJS = $(patsubst ./src/arch/x86_64/%.asm, ./build/arch/x86_64/%.o, $(ASM_SRCS))
 
 # ~~~~~~~~~~~~ QEMU ~~~~~~~~~~~~~
 QEMU = qemu-system-x86_64
@@ -41,9 +42,11 @@ iso: kernel
 	grub-mkrescue -o $(KERN_ISO) build/isofiles
 	rm -rf build/isofiles
 
-kernel: $(ASM_OBJ_FILES)
-	#$(CARGO) xbuild $(RUSTC_FLAGS)
+kernel: $(ASM_OBJS) $(RUST_OBJ)
 	$(LD) $(LD_FLAGS) -o $(KERNEL) $^ 
+
+$(RUST_OBJ): $(RUST_SRCS)
+	$(CARGO) xbuild $(RUSTC_FLAGS)
 
 build/arch/x86_64/%.o: src/arch/x86_64/%.asm
 	mkdir -p $(shell dirname $@)
