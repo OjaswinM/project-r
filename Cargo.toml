@@ -1,0 +1,14 @@
+[package]
+name = "project-r"
+version = "0.1.0"
+authors = ["OjaswinM <ojaswin@hotmail.com>"]
+edition = "2018"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+[dependencies]
+bootloader = "0.8.0"

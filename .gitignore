@@ -1,8 +1,10 @@
-*.o
-*.swp
-*.swo
-*.img
-
 compiler/
-boot/
-lib/
+*.swp
+*.o
+*.bak
+*.out
+
+#Added by cargo
+
+/target
+/build

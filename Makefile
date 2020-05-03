@@ -1,29 +1,28 @@
-MAKE = make
+# ~~~~~~~~~~ Compilers and flags ~~~~~~~~~~~~~
+# Rust compiler
+CARGO = cargo 
+RUSTC  = rustc
+CARGO_FLAGS = --target $(RUST_TARGET)
 
-# ~~~~~~~~~~~~~~ Dependencies ~~~~~~~~~~~~~
-BOOT_DIR = boot/
-KERN_DIR = kernel/
-DRIVERS_DIR = drivers/
-
-SRCS = $(wildcard $(KERN_DIR/*.c)) $(wildcard $(DRIVERS_DIR/*.c)) 
-OBJS = $(patsubst %.c, %.o, $(SRC))
-
-# ~~~~~~~~~~~~~~ QEMU ~~~~~~~~~~~~~
+# ~~~~~~~~~~~~ PATHS & FILES ~~~~~~~~~~~~~
+RUST_TARGET = ./x86_64-target.json
+RUST_SRCS = $(wildcard ./src/*.rs)
+KERN_BIN = target/x86_64-target/debug/bootimage-project-r.bin
+# ~~~~~~~~~~~~ QEMU ~~~~~~~~~~~~~
 QEMU = qemu-system-x86_64
-QEMU_FLAGS = -monitor stdio
+QEMU_FLAGS = -monitor stdio 
 
-build: all
-	$(MAKE) -C $(DRIVERS_DIR) 
-	$(MAKE) -C $(KERN_DIR)
+all: run
 
-run: all
-	$(MAKE) -C $(KERN_DIR) $@
+run: kernel
+	$(QEMU) $(QEMU_FLAGS) -drive format=raw,file=$(KERN_BIN) 
 
-run_and_pause: all
-	$(MAKE) -C $(KERN_DIR) $@
+run_and_pause: iso
+	$(QEMU) $(QEMU_FLAGS) -s -S -drive format=raw,file=$(KERN_BIN) 
 
-all: $(OBJS)
+kernel: $(RUST_SRCS)
+	$(CARGO) bootimage $(CARGO_FLAGS)
 
 clean:
-	$(MAKE) -C $(KERN_DIR) $@
-	$(MAKE) -C $(DRIVERS_DIR) $@
+	rm -rf target
+
