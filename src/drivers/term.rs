@@ -1,6 +1,7 @@
 use crate::drivers::vga;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use core::fmt;
 
 pub struct TermCursor {
    row: usize,
@@ -48,6 +49,17 @@ impl TermCursor {
 	}
 }
 
+
+impl fmt::Write for TermCursor 
+{
+    fn write_str(&mut self, s: &str) -> fmt::Result 
+	{
+        self.print(s);
+        Ok(())
+    }
+}
+
+
 lazy_static! {
 	pub static ref term: Mutex<TermCursor> = Mutex::new(TermCursor {
 		row: 0,
@@ -56,7 +68,9 @@ lazy_static! {
 }
 
 pub fn term_print(s: &str) {
-	term.lock().print(s);
+	use core::fmt::Write;
+	write!(term.lock(), "The numbers are {} and {}", 42, 1.0/3.0).unwrap();
+	//term.lock().print(s);
 }
 
 
