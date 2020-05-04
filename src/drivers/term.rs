@@ -73,8 +73,23 @@ pub fn term_print(s: &str) {
 	//term.lock().print(s);
 }
 
+#[macro_export]
+macro_rules! print {
+        ($($arg:tt)*) => ($crate::drivers::term::_print(format_args!($($arg)*)));
+}
 
+#[macro_export]
+macro_rules! println {
+    () => (print!("\n"));
+    ($($arg:tt)*) => (print!("{}\n", format_args!($($arg)*)));
+}
 
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+        use core::fmt::Write;
+        //wrtie_fmt() is from Write trait
+        term.lock().write_fmt(args).unwrap();
+}
 
 
 
