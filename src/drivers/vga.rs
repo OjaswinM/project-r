@@ -1,8 +1,8 @@
 // Constants
 
 const VGA_MEM_START: u32 = 0xb8000;
-const VGA_COLS: usize = 80;
-const VGA_ROWS: usize = 25;
+pub const VGA_COLS: usize = 80;
+pub const VGA_ROWS: usize = 25;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -63,8 +63,8 @@ struct VgaStruct {
 impl VgaStruct {
 	
 	pub fn cls(&mut self) -> () {
-		for i in 0..VGA_ROWS  {
-			for j in 0..VGA_COLS {
+		for i in 0..(VGA_ROWS -1)  {
+			for j in 0..(VGA_COLS -1) {
 				// 32 is the ASCII value for <Space>
 				self.buffer.buf[i][j] = VgaEntry::new(32, self.color);
 			}
@@ -86,6 +86,15 @@ pub fn vga_put(char: u8, row: usize, col: usize) -> () {
 	vga.put(char, row, col);
 }
 
+pub fn vga_cls() -> () {
+	let mut vga = VgaStruct {
+		buffer: unsafe { &mut *(VGA_MEM_START as *mut VgaBuffer) },
+		color: VgaColor::new(ColorCodes::Yellow, ColorCodes::Black),
+	};
+
+	vga.cls()
+	
+}
 
 
 
