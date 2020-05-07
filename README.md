@@ -1,28 +1,29 @@
 # Project R 
 
-A simple PoC OS (that will soon be)written in Rust. Currently, the kernel is implemented in C and little assembly.
+A PoC OS written in Rust. 
 
-## Usage
+## Booting the OS
 
-Although this OS is capable of booting on any system with GRUB, for convinience, we use an x86_64 system emulator like QEMU for development and testing purposes.  
+Although this OS is capable of booting on any x86_64 hardware, for convinience, we use an x86_64 system emulator like QEMU for development and testing.  
 
 Follow the following steps to boot the OS with QEMU on your device:-
   - Download the appropriate QEMU version for your OS from the [download page](https://www.qemu.org/download/).
-  - Download `kernel.img` from the release page [here](https://github.com/OjaswinM/project-r/releases).
+  - Download the most recent release from [here](https://github.com/OjaswinM/project-r/releases).
   - Run the following command from the terminal or Powershell:-
     ```
-    qemu-system-x86_64 -kernel /path/to/kernel.img
+    qemu-system-x86_64 -drive format=raw,file=path/to/kernel
     ```
 This should open a new QEMU window which will boot the OS and start execution.
 
 ## Build
 
-*Note: This section assumes you have correctly installed QEMU put it in your $PATH*
+*Note: This section assumes you have correctly installed QEMU and put it in your $PATH. If not, refer to the first step under "Booting the OS" section*
 
 You will need to follow these steps to correctly set up the development environment:- 
-  - In order to build the kernel files, a GCC cross compiler and cross Binutils are needed. The instruction to install the same on the OS of your choice can be found [here](https://wiki.osdev.org/GCC_Cross-Compiler). 
-  - After installing the neccessary files, make sure that the cross compiler is in your $PATH or windows equivalent.
-  - Next you will need make to compile the neccessary files. It can be installed as follows:-
+  - Install Rust (preferably via rustup). More details can be found [here](https://www.rust-lang.org/tools/install)
+  - We use some experimental features of Rust in our kernel which will only be available in the nightly release. Run `rustup override add nightly` to install Rust nightly.
+  - Run `rustup component add rust-src` followed by `cargo install cargo-xbuild bootimage` to install the dependencies of the kernel.
+  - Install `make` to automate building and launching the kernel. It can be installed as follows:-
     - Ubuntu: 
       ```
       sudo apt-get intall make
@@ -32,9 +33,9 @@ You will need to follow these steps to correctly set up the development environm
       ```
        brew install make
       ```
-  - Finally you can compile and run the kernel by typing following command in the project's directory:-
+  - Finally you can compile and boot the kernel with `qemu` by running the following command in the project's root directory:-
     ```
-    make && make run
+    make run
     ```
 
 *TODO*: Complete this readme.
