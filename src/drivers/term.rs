@@ -75,7 +75,7 @@ pub fn TERM_print(s: &str) {
 
 #[macro_export]
 macro_rules! print {
-        ($($arg:tt)*) => ($crate::drivers::TERM::_print(format_args!($($arg)*)));
+        ($($arg:tt)*) => ($crate::drivers::term::_print(format_args!($($arg)*)));
 }
 
 #[macro_export]
