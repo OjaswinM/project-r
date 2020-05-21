@@ -1,5 +1,6 @@
 compiler/
 *.swp
+*.swo
 *.o
 *.bak
 *.out
