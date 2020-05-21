@@ -61,21 +61,21 @@ impl fmt::Write for TermCursor
 
 
 lazy_static! {
-	pub static ref term: Mutex<TermCursor> = Mutex::new(TermCursor {
+	pub static ref TERM: Mutex<TermCursor> = Mutex::new(TermCursor {
 		row: 0,
 		col: 0,
 	});
 }
 
-pub fn term_print(s: &str) {
+pub fn TERM_print(s: &str) {
 	use core::fmt::Write;
-	write!(term.lock(), "The numbers are {} and {}", 42, 1.0/3.0).unwrap();
-	//term.lock().print(s);
+	write!(TERM.lock(), "The numbers are {} and {}", 42, 1.0/3.0).unwrap();
+	//TERM.lock().print(s);
 }
 
 #[macro_export]
 macro_rules! print {
-        ($($arg:tt)*) => ($crate::drivers::term::_print(format_args!($($arg)*)));
+        ($($arg:tt)*) => ($crate::drivers::TERM::_print(format_args!($($arg)*)));
 }
 
 #[macro_export]
@@ -87,8 +87,11 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
         use core::fmt::Write;
+		use x86_64::instructions::interrupts;
         //wrtie_fmt() is from Write trait
-        term.lock().write_fmt(args).unwrap();
+		interrupts::without_interrupts(|| {
+			TERM.lock().write_fmt(args).unwrap();
+		});
 }
 
 
