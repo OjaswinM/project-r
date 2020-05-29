@@ -27,7 +27,7 @@ impl TermCursor {
 		}
 	}
 
-	fn cls(&mut self)
+	pub fn cls(&mut self)
 	{
 		vga::vga_cls();
 		self.set_cursor(0,0);

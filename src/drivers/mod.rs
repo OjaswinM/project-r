@@ -6,6 +6,7 @@
 pub mod vga;
 pub mod term;
 pub mod interrupts;
+pub mod memory;
 
 use x86_64;
 
