@@ -2,7 +2,7 @@ use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 use crate::{println, print};
 use lazy_static::lazy_static;
 use volatile::Volatile;
-use spin;
+use spin::Mutex;
 use pic8259_simple::ChainedPics;
 use x86_64::structures::idt::PageFaultErrorCode;
 
@@ -15,7 +15,26 @@ pub const PIC1_BASE: u8 = 32;
 // PIC 1 has 8 lines therefore PIC2_BASE would be 32+8
 pub const PIC2_BASE: u8 = 32 + 8;
 
-pub const KEY_BUF_SIZE: usize = 128;
+pub const KEY_BUF_SIZE: usize = 1024;
+
+#[derive(Debug)]
+pub struct InputStruct {
+    INPUT_MODE_FLAG: bool,
+    INPUT_READY_FLAG: bool,
+    INPUT_PTR_START: usize,
+    INPUT_PTR_END: usize,
+}
+
+lazy_static!{
+    pub static ref KEY_BUF: spin::Mutex<[u8; KEY_BUF_SIZE]> = spin::Mutex::new([0 as u8; KEY_BUF_SIZE]); 
+    pub static ref KEY_BUF_INDEX: spin::Mutex<usize> = spin::Mutex::new(0 as usize);
+    pub static ref INPUT_STRUCT: spin::Mutex<InputStruct> = spin::Mutex::new(InputStruct {
+        INPUT_MODE_FLAG: false,
+        INPUT_READY_FLAG: false,
+        INPUT_PTR_START: 0,
+        INPUT_PTR_END: 0,
+    });
+}
 
 // Enum for pic8259 interrupt vector table indexes
 #[derive(Debug, Clone, Copy)]
@@ -61,23 +80,10 @@ extern "x86-interrupt" fn double_fault_handler(
 }
 
 extern "x86-interrupt" fn timer_handler(stack_frame: &mut InterruptStackFrame) {
-    print!(".");
 
 	unsafe {
 		PICS.lock().notify_end_of_interrupt(PicIntIndex::Timer.as_u8());
 	}
-}
-
-pub static mut KEY_BUF: &'static mut [u8; KEY_BUF_SIZE] = & mut [0 as u8; KEY_BUF_SIZE] ; 
-
-// lazy_static! {
-    // pub static ref KEY_BUF_INDEX: usize = 0 as usize;
-// }
-
-pub static mut KEY_BUF_INDEX: usize = 0 as usize;
-
-lazy_static!{
-    pub static ref READY_FLAG: spin::Mutex<Volatile<bool>> = spin::Mutex::new(Volatile::new(false));
 }
 
 extern "x86-interrupt" fn add_to_key_buf(ch: u8) {
@@ -112,17 +118,32 @@ extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut InterruptStackFrame
         if let Some(key) = keyboard.process_keyevent(key_event) {
             match key {
                 DecodedKey::Unicode(ch) => {
-                    if ch == '\n' {
-                        unsafe {READY_FLAG.lock().write(true)}
-                    } else {
-                         use::core::str;
-                         unsafe { 
-                             KEY_BUF[KEY_BUF_INDEX] = ch as u8;
-                             KEY_BUF_INDEX += 1;
-                             //println!("{}", str::from_utf8(&KEY_BUF[0..KEY_BUF_INDEX]).unwrap());
-                             print!("{}", ch);
-                         }
+                    let mut key_buf = KEY_BUF.lock();
+                    let mut i = KEY_BUF_INDEX.lock();
+                    let mut input = INPUT_STRUCT.lock();
+
+                    match ch 
+                    {
+                        '\n' => {
+                            input.INPUT_PTR_END = *i;
+                            input.INPUT_READY_FLAG = true;    
+                        },
+                        _ => {
+                            if input.INPUT_MODE_FLAG == true {
+                                input.INPUT_MODE_FLAG = false;
+                                input.INPUT_PTR_START = *i;
+                            }
+
+                            key_buf[*i] = ch as u8;
+                            *i += 1;
+                            drop(key_buf);
+                            drop(i);
+
+                            print!("{}", ch)
+                            // println!("{}", *KEY_BUF_INDEX.lock())
+                        },
                     }
+
                 },
                 DecodedKey::RawKey(key) => print!("{:?}", key),
             }
@@ -139,37 +160,30 @@ pub fn idt_init() {
 }
 
 pub fn input_from_user() -> [u8; 4] {
+     use x86_64::instructions::interrupts;
     // loop till ready
-    unsafe{
 
-       //  while true {
-       //      if (READY_FLAG.lock().read()) {
-       //          break;
-       //      }
-       //  }
+        interrupts::without_interrupts(|| {
+            let mut inp = INPUT_STRUCT.lock();
+            inp.INPUT_MODE_FLAG = true;
+        });
 
-        use::core::str;
-
-        //let temp = str::from_utf8(KEY_BUF).unwrap().trim();
-        //temp = [u8; KEY_BUF_INDEX]
-
-        //for i in 0..KEY_BUF_INDEX {
-        //    temp[i] = KEY_BUF[i];
-        //    KEY_BUF[i] = 0;
-        //}
-
-        //KEY_BUF_INDEX = 0;
-        //for i in 0..KEY_BUF_SIZE {
-           //KEY_BUF[i] = 0 as u8;
-        //}
-        let mut temp: [u8; 4] = [0; 4];
-        for i in 0..4 {
-            temp[i] = KEY_BUF[i];
+        let mut ready = false;
+        while !ready {
+            interrupts::without_interrupts(|| {
+                ready = INPUT_STRUCT.lock().INPUT_READY_FLAG;
+            });
+            for i in 1..0xffff {}
         }
 
-        READY_FLAG.lock().write(false);
+        let mut temp = [0 as u8; 4];
+        interrupts::without_interrupts(|| {
+            let key_buf = KEY_BUF.lock();
+            for i in 0..4 {
+                temp[i] = key_buf[i];
+            }
+        });
         temp
-    }
 }
 
 lazy_static!{

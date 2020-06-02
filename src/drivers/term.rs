@@ -67,12 +67,6 @@ lazy_static! {
 	});
 }
 
-pub fn TERM_print(s: &str) {
-	use core::fmt::Write;
-	write!(TERM.lock(), "The numbers are {} and {}", 42, 1.0/3.0).unwrap();
-	//TERM.lock().print(s);
-}
-
 #[macro_export]
 macro_rules! print {
         ($($arg:tt)*) => ($crate::drivers::term::_print(format_args!($($arg)*)));
@@ -93,6 +87,3 @@ pub fn _print(args: fmt::Arguments) {
 			TERM.lock().write_fmt(args).unwrap();
 		});
 }
-
-
-

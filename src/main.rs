@@ -19,12 +19,13 @@ fn kmain(boot_info: &'static BootInfo) -> ! {
 	drivers::init();
     drivers::term::TERM.lock().cls();
 	
-	x86_64::instructions::interrupts::int3();
+//	x86_64::instructions::interrupts::int3();
 
+    print!("user@proj-r$ ");
 
-    //let temp: [u8; 4];
-    //temp = drivers::interrupts::input_from_user();
-    // println!("\n{}", str::from_utf8(&temp).unwrap());
+    let temp: [u8; 4];
+    temp = drivers::interrupts::input_from_user();
+    println!("\n{}", str::from_utf8(&temp).unwrap());
 
     // let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
 
@@ -43,16 +44,13 @@ fn kmain(boot_info: &'static BootInfo) -> ! {
 
     //println!("~~~~ [TIMER DEMO] ~~~~\n");
     //println!("Task: We will try to handle the timer interrupt:- ");
-    println!("[Printing] Vga Display is working correctly\n");
+    // println!("[Printing] Vga Display is working correctly\n");
 
-    let test = (1,2,3);
-    println!(">> Trying to use formatting macro to print a struct\n{:?}", test);
+    // let test = (1,2,3);
+    // println!(">> Trying to use formatting macro to print a struct\n{:?}", test);
 
-    println!("\n Trying to access illegal memory by printing to wrong offset");
+    // println!("\n Trying to access illegal memory by printing to wrong offset");
     
-   drivers::vga::vga_put('A' as u8, 100, 100);
-
-
     // for &address in &addresses {
     //     let virt = VirtAddr::new(address);
     //    // let phys = unsafe { drivers::memory::translate_addr(virt, phys_mem_offset) };
