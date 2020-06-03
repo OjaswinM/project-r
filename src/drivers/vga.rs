@@ -82,6 +82,15 @@ impl VgaStruct {
 pub fn vga_put(char: u8, row: usize, col: usize) -> () {
 	let mut vga = VgaStruct {
 		buffer: unsafe { &mut *(VGA_MEM_START as *mut VgaBuffer) },
+		color: VgaColor::new(ColorCodes::White, ColorCodes::Black),
+	};
+
+	vga.put(char, row, col);
+}
+
+pub fn vga_put_yellow(char: u8, row: usize, col: usize) -> () {
+	let mut vga = VgaStruct {
+		buffer: unsafe { &mut *(VGA_MEM_START as *mut VgaBuffer) },
 		color: VgaColor::new(ColorCodes::Yellow, ColorCodes::Black),
 	};
 
@@ -91,7 +100,7 @@ pub fn vga_put(char: u8, row: usize, col: usize) -> () {
 pub fn vga_cls() -> () {
 	let mut vga = VgaStruct {
 		buffer: unsafe { &mut *(VGA_MEM_START as *mut VgaBuffer) },
-		color: VgaColor::new(ColorCodes::Yellow, ColorCodes::Black),
+		color: VgaColor::new(ColorCodes::White, ColorCodes::Black),
 	};
 
 	vga.cls()

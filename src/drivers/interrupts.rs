@@ -79,11 +79,28 @@ extern "x86-interrupt" fn double_fault_handler(
     panic!("\n[EXCEPTION]: Double Fault\n{:#?}", stack_frame);
 }
 
+lazy_static!{
+    pub static ref timer_demo_flag: spin::Mutex<bool> = spin::Mutex::new(false);
+    pub static ref timer_demo_count: spin::Mutex<u8> = spin::Mutex::new(0 as u8);
+}
+
 extern "x86-interrupt" fn timer_handler(stack_frame: &mut InterruptStackFrame) {
+    if *timer_demo_flag.lock() {
+        print!("*");
+    }
 
 	unsafe {
 		PICS.lock().notify_end_of_interrupt(PicIntIndex::Timer.as_u8());
 	}
+}
+
+pub fn toggle_timer() {
+    use x86_64::instructions::interrupts;
+
+    interrupts::without_interrupts(|| {
+        let mut flag  = timer_demo_flag.lock();
+        *flag = !*flag
+    });
 }
 
 extern "x86-interrupt" fn add_to_key_buf(ch: u8) {
@@ -176,11 +193,17 @@ pub fn input_from_user() -> [u8; 4] {
             for i in 1..0xffff {}
         }
 
+        interrupts::without_interrupts(|| {
+            let mut inp = INPUT_STRUCT.lock();
+            inp.INPUT_READY_FLAG = false;
+        });
+        
         let mut temp = [0 as u8; 4];
         interrupts::without_interrupts(|| {
             let key_buf = KEY_BUF.lock();
+            let inp_start = INPUT_STRUCT.lock().INPUT_PTR_START;
             for i in 0..4 {
-                temp[i] = key_buf[i];
+                temp[i] = key_buf[inp_start + i];
             }
         });
         temp

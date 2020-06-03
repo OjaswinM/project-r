@@ -47,6 +47,21 @@ impl TermCursor {
 			}
 		}
 	}
+
+	pub fn print_yellow(&mut self, s: &str)
+	{
+		for byte in s.bytes() {
+			match byte
+			{
+				b'\n' => self.set_cursor(self.row + 1, 0),
+				b'\r' => self.set_cursor(self.row, 0),
+				_ => {
+						vga::vga_put_yellow(byte, self.row, self.col);
+						self.move_cursor(1);
+				},
+			}
+		}
+	}
 }
 
 
@@ -87,3 +102,18 @@ pub fn _print(args: fmt::Arguments) {
 			TERM.lock().write_fmt(args).unwrap();
 		});
 }
+
+pub fn print_yellow(string: &str) {
+    use x86_64::instructions::interrupts;
+    interrupts::without_interrupts(|| {
+        TERM.lock().print_yellow(string);
+    });
+}
+
+pub fn term_cls() {
+		use x86_64::instructions::interrupts;
+		interrupts::without_interrupts(|| {
+			TERM.lock().cls();
+		});
+}
+    
