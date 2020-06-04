@@ -1,11 +1,6 @@
-use x86_64::{
-    structures::paging::PageTable,
-    VirtAddr,
-};
+use x86_64::{structures::paging::PageTable, VirtAddr};
 
-unsafe fn active_level_4_table(physical_memory_offset: VirtAddr)
-    -> &'static mut PageTable
-{
+unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static mut PageTable {
     use x86_64::registers::control::Cr3;
 
     let (level_4_table_frame, _) = Cr3::read();
@@ -25,23 +20,22 @@ use x86_64::PhysAddr;
 /// This function is unsafe because the caller must guarantee that the
 /// complete physical memory is mapped to virtual memory at the passed
 /// `physical_memory_offset`.
-pub unsafe fn translate_addr(addr: VirtAddr, physical_memory_offset: VirtAddr)
-    -> Option<PhysAddr>
-    {
-        translate_addr_inner(addr, physical_memory_offset)
-        }
+pub unsafe fn translate_addr(addr: VirtAddr, physical_memory_offset: VirtAddr) -> Option<PhysAddr> {
+    translate_addr_inner(addr, physical_memory_offset)
+}
 
-fn translate_addr_inner(addr: VirtAddr, physical_memory_offset: VirtAddr)
-    -> Option<PhysAddr>
-{
-    use x86_64::structures::paging::page_table::FrameError;
+fn translate_addr_inner(addr: VirtAddr, physical_memory_offset: VirtAddr) -> Option<PhysAddr> {
     use x86_64::registers::control::Cr3;
+    use x86_64::structures::paging::page_table::FrameError;
 
     // read the active level 4 frame from the CR3 register
     let (level_4_table_frame, _) = Cr3::read();
 
     let table_indexes = [
-        addr.p4_index(), addr.p3_index(), addr.p2_index(), addr.p1_index()
+        addr.p4_index(),
+        addr.p3_index(),
+        addr.p2_index(),
+        addr.p1_index(),
     ];
     let mut frame = level_4_table_frame;
 
@@ -50,7 +44,7 @@ fn translate_addr_inner(addr: VirtAddr, physical_memory_offset: VirtAddr)
         // convert the frame into a page table reference
         let virt = physical_memory_offset + frame.start_address().as_u64();
         let table_ptr: *const PageTable = virt.as_ptr();
-        let table = unsafe {&*table_ptr};
+        let table = unsafe { &*table_ptr };
 
         // read the page table entry and update `frame`
         let entry = &table[index];

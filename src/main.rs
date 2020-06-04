@@ -4,20 +4,20 @@
 #![allow(dead_code)]
 
 pub mod drivers;
-use x86_64;
-use core::str;
+use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use bootloader::{BootInfo, entry_point};
+use core::str;
+use x86_64;
 
 entry_point!(kmain);
 
 #[no_mangle] // don't mangle the name of this function
 fn kmain(boot_info: &'static BootInfo) -> ! {
-	use x86_64::{structures::paging::Page, VirtAddr};
-	use x86_64::{structures::paging::MapperAllSizes};
     use drivers::term;
+    use x86_64::structures::paging::MapperAllSizes;
+    use x86_64::{structures::paging::Page, VirtAddr};
 
-	drivers::init();
+    drivers::init();
 
     let mut run = 0;
 
@@ -26,7 +26,7 @@ fn kmain(boot_info: &'static BootInfo) -> ! {
     term::print_yellow("Press <Enter> to launch shell");
     pause();
 
-    while true {
+    loop {
         term::term_cls();
         term::print_yellow("user@proj-r$ ");
 
@@ -37,28 +37,28 @@ fn kmain(boot_info: &'static BootInfo) -> ! {
         match input {
             "disp" => {
                 disp_demo();
-            },
+            }
             "keyb" => {
                 keyboard_demo();
-            },
+            }
             "time" => {
                 timer_demo();
-            },
+            }
             "excp" => {
                 exception_demo();
-            },
+            }
             "inpt" => {
                 input_demo();
-            },
+            }
             "exit" => {
                 break;
-            },
+            }
             _ => {
-                println!{"\nError: Command not found. Supported commands are disp, keyb, time, excp, inpt and exit"}
+                println!("\nError: Command not found. Supported commands are disp, keyb, time, excp, inpt and exit");
                 pause();
             }
         }
-    } 
+    }
     drivers::hlt_loop()
 }
 
@@ -74,12 +74,12 @@ fn disp_demo() {
     let inp = drivers::interrupts::input_from_user();
     let temp = str::from_utf8(&inp).unwrap();
     let row: usize = temp[0..2].parse().unwrap();
-    
+
     print!("\n - [Vga Demo] Enter the column: ");
     let inp = drivers::interrupts::input_from_user();
     let temp = str::from_utf8(&inp[0..2]).unwrap();
     let col: usize = temp.parse().unwrap();
-    
+
     println!("\n - [Vga Demo] Printing 'X' to given row and column... ");
     drivers::vga::vga_put(b'X', row, col);
     pause();
@@ -94,7 +94,7 @@ fn disp_demo() {
     print!("\n - [Terminal Demo] Success!\n");
     pause();
 
-    let test = (1,2,3);
+    let test = (1, 2, 3);
     println!(" - [Terminal Demo] Trying to use formatting macro to print a tuple.");
     println!(" - [Terminal Demo] {:?}...Working correctly!", test);
 
@@ -150,7 +150,9 @@ fn exception_demo() {
 
 fn input_demo() {
     println!("\n ~~~~ [INPUT DEMO] ~~~~\n");
-    drivers::term::print_yellow("Task: Demonstrate the working of input module that accepts data from user.\n\n");
+    drivers::term::print_yellow(
+        "Task: Demonstrate the working of input module that accepts data from user.\n\n",
+    );
     print!(" - [Input Demo] Input any string: ");
 
     let inp = drivers::interrupts::input_from_user();
@@ -160,18 +162,17 @@ fn input_demo() {
 
     println!("\n - [Timer Demo]Demo completed! Press <Enter> to continue");
     pause();
-
 }
 
 fn print_welcome() {
-   println!("Welcome to..\n");
-   println!("     ____               _           __              ____  ");
-   println!("    / __ \\_________    (_)__  _____/ /_            / __ \\ ");
-   println!("   / /_/ / ___/ __ \\  / / _ \\/ ___/ __/  ______   / /_/ / ");
-   println!("  / ____/ /  / /_/ / / /  __/ /__/ /_   /_____/  / _, _/  ");
-   println!(" /_/   /_/   \\____/_/ /\\___/\\___/\\__/           /_/ |_|   ");
-   println!("                 /___/                                   ");
-   println!("\nAn operating system developed in Rust\n");
+    println!("Welcome to..\n");
+    println!("     ____               _           __              ____  ");
+    println!("    / __ \\_________    (_)__  _____/ /_            / __ \\ ");
+    println!("   / /_/ / ___/ __ \\  / / _ \\/ ___/ __/  ______   / /_/ / ");
+    println!("  / ____/ /  / /_/ / / /  __/ /__/ /_   /_____/  / _, _/  ");
+    println!(" /_/   /_/   \\____/_/ /\\___/\\___/\\__/           /_/ |_|   ");
+    println!("                 /___/                                   ");
+    println!("\nAn operating system developed in Rust\n");
 }
 
 /// This function is called on panic.
@@ -181,5 +182,3 @@ fn panic(_info: &PanicInfo) -> ! {
 
     drivers::hlt_loop()
 }
-
-

@@ -30,95 +30,93 @@ pub enum ColorCodes {
 struct VgaColor(u8);
 
 impl VgaColor {
-	fn new(fg: ColorCodes, bg: ColorCodes) -> VgaColor {
-		VgaColor((bg as u8) << 4 | (fg as u8))
-	}
+    fn new(fg: ColorCodes, bg: ColorCodes) -> VgaColor {
+        VgaColor((bg as u8) << 4 | (fg as u8))
+    }
 }
 
 #[repr(C)]
 struct VgaEntry {
-	character: u8,
-	color: VgaColor,
+    character: u8,
+    color: VgaColor,
 }
 
 impl VgaEntry {
-	fn new(char: u8, color: VgaColor) -> VgaEntry {
-		VgaEntry { 
-			character: char,
-			color: color,
-		}		
-	}
+    fn new(char: u8, color: VgaColor) -> VgaEntry {
+        VgaEntry {
+            character: char,
+            color: color,
+        }
+    }
 }
 
 #[repr(transparent)]
 struct VgaBuffer {
-	buf: [[VgaEntry; VGA_COLS]; VGA_ROWS],
+    buf: [[VgaEntry; VGA_COLS]; VGA_ROWS],
 }
 
 struct VgaStruct {
-	buffer: &'static mut VgaBuffer,
-	color: VgaColor,
+    buffer: &'static mut VgaBuffer,
+    color: VgaColor,
 }
 
 impl VgaStruct {
-	
-	pub fn cls(&mut self) -> () {
-		for i in 0..(VGA_ROWS -1)  {
-			for j in 0..(VGA_COLS -1) {
-				// 32 is the ASCII value for <Space>
-				self.buffer.buf[i][j] = VgaEntry::new(b' ', self.color);
-			}
-		}
+    pub fn cls(&mut self) -> () {
+        for i in 0..(VGA_ROWS - 1) {
+            for j in 0..(VGA_COLS - 1) {
+                // 32 is the ASCII value for <Space>
+                self.buffer.buf[i][j] = VgaEntry::new(b' ', self.color);
+            }
+        }
 
         // vga_blink(20, 20);
-	}
+    }
 
-	pub fn put(&mut self, char: u8, row: usize, col: usize) -> () {
-		self.buffer.buf[row][col] = VgaEntry::new(char, self.color)
-	}
+    pub fn put(&mut self, char: u8, row: usize, col: usize) -> () {
+        self.buffer.buf[row][col] = VgaEntry::new(char, self.color)
+    }
 }
 
-
 pub fn vga_put(char: u8, row: usize, col: usize) -> () {
-	let mut vga = VgaStruct {
-		buffer: unsafe { &mut *(VGA_MEM_START as *mut VgaBuffer) },
-		color: VgaColor::new(ColorCodes::White, ColorCodes::Black),
-	};
+    let mut vga = VgaStruct {
+        buffer: unsafe { &mut *(VGA_MEM_START as *mut VgaBuffer) },
+        color: VgaColor::new(ColorCodes::White, ColorCodes::Black),
+    };
 
-	vga.put(char, row, col);
+    vga.put(char, row, col);
 }
 
 pub fn vga_put_yellow(char: u8, row: usize, col: usize) -> () {
-	let mut vga = VgaStruct {
-		buffer: unsafe { &mut *(VGA_MEM_START as *mut VgaBuffer) },
-		color: VgaColor::new(ColorCodes::Yellow, ColorCodes::Black),
-	};
+    let mut vga = VgaStruct {
+        buffer: unsafe { &mut *(VGA_MEM_START as *mut VgaBuffer) },
+        color: VgaColor::new(ColorCodes::Yellow, ColorCodes::Black),
+    };
 
-	vga.put(char, row, col);
+    vga.put(char, row, col);
 }
 
 pub fn vga_cls() -> () {
-	let mut vga = VgaStruct {
-		buffer: unsafe { &mut *(VGA_MEM_START as *mut VgaBuffer) },
-		color: VgaColor::new(ColorCodes::White, ColorCodes::Black),
-	};
+    let mut vga = VgaStruct {
+        buffer: unsafe { &mut *(VGA_MEM_START as *mut VgaBuffer) },
+        color: VgaColor::new(ColorCodes::White, ColorCodes::Black),
+    };
 
-	vga.cls()
+    vga.cls()
 }
 
 pub fn vga_blink(row: u8, col: u8) {
-    use x86_64::instructions::port::PortWriteOnly; 
+    use x86_64::instructions::port::PortWriteOnly;
 
     let index: u16 = (row * VGA_COLS as u8 + col) as u16;
 
-    let mut vga_crt_index: PortWriteOnly::<u8> = PortWriteOnly::<u8>::new(0x3d4);
-    let mut vga_crt: PortWriteOnly::<u8> = PortWriteOnly::<u8>::new(0x3d5);
+    let mut vga_crt_index: PortWriteOnly<u8> = PortWriteOnly::<u8>::new(0x3d4);
+    let mut vga_crt: PortWriteOnly<u8> = PortWriteOnly::<u8>::new(0x3d5);
 
-    unsafe { 
-        vga_crt_index.write(14 as u8); 
-        vga_crt.write((index >> 8) as u8); 
+    unsafe {
+        vga_crt_index.write(14 as u8);
+        vga_crt.write((index >> 8) as u8);
 
-        vga_crt_index.write(15 as u8); 
-        vga_crt.write((index) as u8); 
+        vga_crt_index.write(15 as u8);
+        vga_crt.write((index) as u8);
     }
 }
