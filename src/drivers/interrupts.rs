@@ -1,8 +1,7 @@
 use crate::{print, println};
 use lazy_static::lazy_static;
 use pic8259_simple::ChainedPics;
-use spin::Mutex;
-use volatile::Volatile;
+use spin;
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
@@ -19,10 +18,10 @@ pub const KEY_BUF_SIZE: usize = 1024;
 
 #[derive(Debug)]
 pub struct InputStruct {
-    INPUT_MODE_FLAG: bool,
-    INPUT_READY_FLAG: bool,
-    INPUT_PTR_START: usize,
-    INPUT_PTR_END: usize,
+    input_mode_flag: bool,
+    input_ready_flag: bool,
+    input_ptr_start: usize,
+    input_ptr_end: usize,
 }
 
 lazy_static! {
@@ -30,10 +29,10 @@ lazy_static! {
         spin::Mutex::new([0 as u8; KEY_BUF_SIZE]);
     pub static ref KEY_BUF_INDEX: spin::Mutex<usize> = spin::Mutex::new(0 as usize);
     pub static ref INPUT_STRUCT: spin::Mutex<InputStruct> = spin::Mutex::new(InputStruct {
-        INPUT_MODE_FLAG: false,
-        INPUT_READY_FLAG: false,
-        INPUT_PTR_START: 0,
-        INPUT_PTR_END: 0,
+        input_mode_flag: false,
+        input_ready_flag: false,
+        input_ptr_start: 0,
+        input_ptr_end: 0,
     });
 }
 
@@ -58,12 +57,12 @@ impl PicIntIndex {
 pub static PICS: spin::Mutex<ChainedPics> =
     spin::Mutex::new(unsafe { ChainedPics::new(PIC1_BASE, PIC2_BASE) });
 
-extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStackFrame) {
-    println!("\n[EXCEPTION]: Breakpoint\n{:#?}", stack_frame);
+extern "x86-interrupt" fn breakpoint_handler(_stack_frame: &mut InterruptStackFrame) {
+    println!("\n[EXCEPTION]: Breakpoint\n{:#?}", _stack_frame);
 }
 
 extern "x86-interrupt" fn page_fault_handler(
-    stack_frame: &mut InterruptStackFrame,
+    _stack_frame: &mut InterruptStackFrame,
     error_code: PageFaultErrorCode,
 ) {
     use x86_64::registers::control::Cr2;
@@ -71,24 +70,24 @@ extern "x86-interrupt" fn page_fault_handler(
     println!("[Exception]: Page Fault");
     println!("Accessed Address: {:?}", Cr2::read());
     println!("Error Code: {:?}", error_code);
-    println!("{:#?}", stack_frame);
+    println!("{:#?}", _stack_frame);
     crate::drivers::hlt_loop();
 }
 
 extern "x86-interrupt" fn double_fault_handler(
-    stack_frame: &mut InterruptStackFrame,
+    _stack_frame: &mut InterruptStackFrame,
     _error_code: u64,
 ) -> ! {
-    panic!("\n[EXCEPTION]: Double Fault\n{:#?}", stack_frame);
+    panic!("\n[EXCEPTION]: Double Fault\n{:#?}", _stack_frame);
 }
 
 lazy_static! {
-    pub static ref timer_demo_flag: spin::Mutex<bool> = spin::Mutex::new(false);
-    pub static ref timer_demo_count: spin::Mutex<u8> = spin::Mutex::new(0 as u8);
+    pub static ref TIMER_DEMO_FLAG: spin::Mutex<bool> = spin::Mutex::new(false);
+    pub static ref TIMER_DEMO_COUNT: spin::Mutex<u8> = spin::Mutex::new(0 as u8);
 }
 
-extern "x86-interrupt" fn timer_handler(stack_frame: &mut InterruptStackFrame) {
-    if *timer_demo_flag.lock() {
+extern "x86-interrupt" fn timer_handler(_stack_frame: &mut InterruptStackFrame) {
+    if *TIMER_DEMO_FLAG.lock() {
         print!("*");
     }
 
@@ -102,7 +101,7 @@ pub fn toggle_timer() {
     use x86_64::instructions::interrupts;
 
     interrupts::without_interrupts(|| {
-        let mut flag = timer_demo_flag.lock();
+        let mut flag = TIMER_DEMO_FLAG.lock();
         *flag = !*flag
     });
 }
@@ -119,10 +118,10 @@ extern "x86-interrupt" fn add_to_key_buf(ch: u8) {
     print!("{}", ch);
 }
 
-extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut InterruptStackFrame) {
+extern "x86-interrupt" fn keyboard_handler(_stack_frame: &mut InterruptStackFrame) {
     use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
-    use spin::Mutex;
     use x86_64::instructions::port::Port;
+    use spin::Mutex;
 
     lazy_static! {
         static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> = Mutex::new(
@@ -144,13 +143,13 @@ extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut InterruptStackFrame
 
                     match ch {
                         '\n' => {
-                            input.INPUT_PTR_END = *i;
-                            input.INPUT_READY_FLAG = true;
+                            input.input_ptr_end = *i;
+                            input.input_ready_flag = true;
                         }
                         _ => {
-                            if input.INPUT_MODE_FLAG == true {
-                                input.INPUT_MODE_FLAG = false;
-                                input.INPUT_PTR_START = *i;
+                            if input.input_mode_flag == true {
+                                input.input_mode_flag = false;
+                                input.input_ptr_start = *i;
                             }
 
                             key_buf[*i] = ch as u8;
@@ -184,26 +183,26 @@ pub fn input_from_user() -> [u8; 4] {
 
     interrupts::without_interrupts(|| {
         let mut inp = INPUT_STRUCT.lock();
-        inp.INPUT_MODE_FLAG = true;
+        inp.input_mode_flag = true;
     });
 
     let mut ready = false;
     while !ready {
         interrupts::without_interrupts(|| {
-            ready = INPUT_STRUCT.lock().INPUT_READY_FLAG;
+            ready = INPUT_STRUCT.lock().input_ready_flag;
         });
-        for i in 1..0xffff {}
+        for _i in 1..0xffff {}
     }
 
     interrupts::without_interrupts(|| {
         let mut inp = INPUT_STRUCT.lock();
-        inp.INPUT_READY_FLAG = false;
+        inp.input_ready_flag = false;
     });
 
     let mut temp = [0 as u8; 4];
     interrupts::without_interrupts(|| {
         let key_buf = KEY_BUF.lock();
-        let inp_start = INPUT_STRUCT.lock().INPUT_PTR_START;
+        let inp_start = INPUT_STRUCT.lock().input_ptr_start;
         for i in 0..4 {
             temp[i] = key_buf[inp_start + i];
         }

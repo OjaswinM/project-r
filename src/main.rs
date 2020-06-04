@@ -12,14 +12,10 @@ use x86_64;
 entry_point!(kmain);
 
 #[no_mangle] // don't mangle the name of this function
-fn kmain(boot_info: &'static BootInfo) -> ! {
+fn kmain(_boot_info: &'static BootInfo) -> ! {
     use drivers::term;
-    use x86_64::structures::paging::MapperAllSizes;
-    use x86_64::{structures::paging::Page, VirtAddr};
 
     drivers::init();
-
-    let mut run = 0;
 
     term::term_cls();
     print_welcome();
