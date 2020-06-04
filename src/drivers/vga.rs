@@ -62,8 +62,8 @@ struct VgaStruct {
 
 impl VgaStruct {
     pub fn cls(&mut self) -> () {
-        for i in 0..(VGA_ROWS - 1) {
-            for j in 0..(VGA_COLS - 1) {
+        for i in 0..(VGA_ROWS) {
+            for j in 0..(VGA_COLS) {
                 // 32 is the ASCII value for <Space>
                 self.buffer.buf[i][j] = VgaEntry::new(b' ', self.color);
             }
